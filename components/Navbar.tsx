@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, TrendingUp, Code, Menu } from 'lucide-react';
+import { Search, X, TrendingUp, Code, Menu, ChevronRight } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 
 export function Navbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const pathname = usePathname();
 
   const trendingSearches = [
     'Artificial Intelligence',
@@ -26,11 +28,52 @@ export function Navbar() {
     'Web Development'
   ];
 
+  // Close menu when route changes
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [pathname]);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (isMenuOpen && !target.closest('.mobile-menu') && !target.closest('.menu-button')) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isMenuOpen]);
+
+  // Prevent body scroll when menu is open
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMenuOpen]);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Searching for:', searchQuery);
     setIsSearchOpen(false);
   };
+
+  const handleLinkClick = () => {
+    setIsMenuOpen(false);
+  };
+
+  const menuItems = [
+    { href: '/trending', label: 'Trending' },
+    { href: '/category/all', label: 'Categories' },
+    { href: '/about', label: 'About' },
+    { href: '/contact', label: 'Contact' },
+  ];
 
   return (
     <>
@@ -88,7 +131,8 @@ export function Navbar() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden p-2 text-gray-400 hover:text-[#00FFC2] transition-colors"
+              className="menu-button md:hidden p-2 text-gray-400 hover:text-[#00FFC2] transition-colors"
+              aria-label="Toggle menu"
             >
               <Menu className="w-6 h-6" />
             </button>
@@ -126,40 +170,91 @@ export function Navbar() {
         {/* Mobile Menu */}
         <AnimatePresence>
           {isMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="md:hidden bg-[#0F0F0F] border-t border-[#00FFC2]/20"
-            >
-              <div className="container mx-auto px-4 py-4 space-y-4">
-                <button
-                  onClick={() => setIsSearchOpen(true)}
-                  className="flex items-center gap-2 w-full p-2 text-gray-400 hover:text-[#00FFC2] transition-colors"
-                >
-                  <Search className="w-5 h-5" />
-                  <span>Search</span>
-                </button>
-                <Link href="/trending" className="block p-2 text-gray-400 hover:text-[#00FFC2] transition-colors">
-                  Trending
-                </Link>
-                <Link href="/category/all" className="block p-2 text-gray-400 hover:text-[#00FFC2] transition-colors">
-                  Categories
-                </Link>
-                <Link href="/about" className="block p-2 text-gray-400 hover:text-[#00FFC2] transition-colors">
-                  About
-                </Link>
-                <Link href="/contact" className="block p-2 text-gray-400 hover:text-[#00FFC2] transition-colors">
-                  Contact
-                </Link>
-                <Link
-                  href="/subscribe"
-                  className="block w-full text-center px-4 py-2 rounded-xl bg-[#00FFC2] text-[#0F0F0F] font-semibold hover:bg-[#00FFC2]/90 transition-colors shadow-lg shadow-[#00FFC2]/20"
-                >
-                  Subscribe
-                </Link>
-              </div>
-            </motion.div>
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden"
+                onClick={handleLinkClick}
+              />
+              <motion.div
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{ 
+                  type: 'spring',
+                  damping: 25,
+                  stiffness: 200
+                }}
+                className="mobile-menu fixed top-20 right-0 bottom-0 w-72 bg-[#0F0F0F] border-l border-[#00FFC2]/20 z-50 overflow-y-auto md:hidden"
+              >
+                <div className="p-4 space-y-2">
+                  {/* Search Button */}
+                  <motion.button
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      setIsSearchOpen(true);
+                      handleLinkClick();
+                    }}
+                    className="flex items-center justify-between w-full p-3 text-gray-400 hover:text-[#00FFC2] transition-colors rounded-lg hover:bg-[#1A1A1A] group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-[#1A1A1A] group-hover:bg-[#00FFC2]/10">
+                        <Search className="w-5 h-5" />
+                      </div>
+                      <span>Search</span>
+                    </div>
+                    <ChevronRight className="w-5 h-5 opacity-50 group-hover:opacity-100" />
+                  </motion.button>
+
+                  {/* Menu Items */}
+                  {menuItems.map((item) => (
+                    <motion.div
+                      key={item.href}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <Link 
+                        href={item.href}
+                        className={`flex items-center justify-between w-full p-3 transition-colors rounded-lg group ${
+                          pathname === item.href
+                            ? 'bg-[#00FFC2]/10 text-[#00FFC2]'
+                            : 'text-gray-400 hover:text-[#00FFC2] hover:bg-[#1A1A1A]'
+                        }`}
+                        onClick={handleLinkClick}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-lg ${
+                            pathname === item.href
+                              ? 'bg-[#00FFC2]/20'
+                              : 'bg-[#1A1A1A] group-hover:bg-[#00FFC2]/10'
+                          }`}>
+                            <Code className="w-5 h-5" />
+                          </div>
+                          <span>{item.label}</span>
+                        </div>
+                        <ChevronRight className="w-5 h-5 opacity-50 group-hover:opacity-100" />
+                      </Link>
+                    </motion.div>
+                  ))}
+
+                  {/* Subscribe Button */}
+                  <motion.div
+                    whileTap={{ scale: 0.98 }}
+                    className="mt-4"
+                  >
+                    <Link
+                      href="/subscribe"
+                      className="flex items-center justify-center w-full p-3 rounded-xl bg-gradient-to-r from-[#00FFC2] to-[#00A8FF] text-[#0F0F0F] font-semibold hover:opacity-90 transition-opacity shadow-lg shadow-[#00FFC2]/20"
+                      onClick={handleLinkClick}
+                    >
+                      Subscribe Now
+                    </Link>
+                  </motion.div>
+                </div>
+              </motion.div>
+            </>
           )}
         </AnimatePresence>
       </nav>
