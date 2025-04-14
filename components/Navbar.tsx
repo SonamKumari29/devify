@@ -3,10 +3,11 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, TrendingUp, Code } from 'lucide-react';
+import { Search, X, TrendingUp, Code, Menu } from 'lucide-react';
 
 export function Navbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   const trendingSearches = [
@@ -84,7 +85,16 @@ export function Navbar() {
               </div>
             </Link>
 
-            <div className="flex items-center gap-8">
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="md:hidden p-2 text-gray-400 hover:text-[#00FFC2] transition-colors"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center gap-8">
               <button
                 onClick={() => setIsSearchOpen(true)}
                 className="p-2 text-gray-400 hover:text-[#00FFC2] transition-colors"
@@ -105,13 +115,53 @@ export function Navbar() {
               </Link>
               <Link
                 href="/subscribe"
-                className="px-6 py-2.5 rounded-xl bg-[#00FFC2] text-[#0F0F0F] font-semibold hover:bg-[#00FFC2]/90 transition-colors shadow-lg shadow-[#00FFC2]/20"
+                className="px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl bg-[#00FFC2] text-[#0F0F0F] font-semibold hover:bg-[#00FFC2]/90 transition-colors shadow-lg shadow-[#00FFC2]/20 text-sm sm:text-base"
               >
                 Subscribe
               </Link>
             </div>
           </div>
         </div>
+
+        {/* Mobile Menu */}
+        <AnimatePresence>
+          {isMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="md:hidden bg-[#0F0F0F] border-t border-[#00FFC2]/20"
+            >
+              <div className="container mx-auto px-4 py-4 space-y-4">
+                <button
+                  onClick={() => setIsSearchOpen(true)}
+                  className="flex items-center gap-2 w-full p-2 text-gray-400 hover:text-[#00FFC2] transition-colors"
+                >
+                  <Search className="w-5 h-5" />
+                  <span>Search</span>
+                </button>
+                <Link href="/trending" className="block p-2 text-gray-400 hover:text-[#00FFC2] transition-colors">
+                  Trending
+                </Link>
+                <Link href="/category/all" className="block p-2 text-gray-400 hover:text-[#00FFC2] transition-colors">
+                  Categories
+                </Link>
+                <Link href="/about" className="block p-2 text-gray-400 hover:text-[#00FFC2] transition-colors">
+                  About
+                </Link>
+                <Link href="/contact" className="block p-2 text-gray-400 hover:text-[#00FFC2] transition-colors">
+                  Contact
+                </Link>
+                <Link
+                  href="/subscribe"
+                  className="block w-full text-center px-4 py-2 rounded-xl bg-[#00FFC2] text-[#0F0F0F] font-semibold hover:bg-[#00FFC2]/90 transition-colors shadow-lg shadow-[#00FFC2]/20"
+                >
+                  Subscribe
+                </Link>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
       <div className="h-20"></div>
 
