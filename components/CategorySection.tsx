@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Code2, Cpu, Cloud, Shield, Database, Smartphone, Cog, BrainCircuit } from 'lucide-react';
+import { FilterTags } from './FilterTags';
 
 const categories = [
   {
@@ -66,44 +67,63 @@ const categories = [
   }
 ];
 
-export function CategorySection() {
+interface Category {
+  id: string;
+  name: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+  bgColor: string;
+  tags: string[];
+  href: string;
+}
+
+interface CategorySectionProps {
+  title: string;
+  categories: Category[];
+}
+
+export function CategorySection({ title, categories }: CategorySectionProps) {
+  const handleTagSelect = (tag: string) => {
+    // Handle tag selection logic here
+    console.log('Selected tag:', tag);
+  };
+
   return (
     <section className="py-4 sm:py-6 md:py-12">
-      <div className="container mx-auto px-3 sm:px-4 max-w-7xl">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-2 sm:mb-4 bg-gradient-to-r from-[#00FFC2] to-[#00FFE5] bg-clip-text text-transparent">
-          Explore Categories
-        </h2>
-        <p className="text-xs sm:text-sm md:text-base text-gray-400 text-center mb-4 sm:mb-6 md:mb-8 max-w-2xl mx-auto">
-          Discover the latest news and updates in your favorite tech categories
-        </p>
+      <div className="container mx-auto px-3 sm:px-4 md:px-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-[#00FFC2] to-[#00FFE5] bg-clip-text text-transparent">
+            Explore Categories
+          </h2>
+          <FilterTags onTagSelect={handleTagSelect} />
+        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-          {categories.map((category) => {
-            const Icon = category.icon;
-            return (
-              <Link
-                key={category.id}
-                href={category.href}
-                className="block group"
-              >
-                <div className="bg-[#0F0F0F] rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 h-full hover:bg-[#1A1A1A] transition-colors border border-[#00FFC2]/10 hover:border-[#00FFC2]/20">
-                  <div className="flex flex-col gap-2 sm:gap-3 md:gap-4">
-                    <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
-                      <div className={`w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full ${category.bgColor} border border-[#00FFC2]/20 flex items-center justify-center relative shrink-0`}>
-                        <Icon className={`w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 ${category.iconColor}`} />
-                      </div>
-                      <h3 className="text-base sm:text-lg md:text-xl font-semibold text-white group-hover:text-[#00FFC2] transition-colors line-clamp-2">
-                        {category.name}
-                      </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          {categories.map((category) => (
+            <Link
+              key={category.id}
+              href={category.href}
+              className="block group"
+            >
+              <div className="bg-[#1A1A1A] rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 hover:bg-[#252525] transition-colors">
+                <div className="flex items-start gap-3 sm:gap-4">
+                  <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center bg-gradient-to-r ${category.bgColor} p-0.5`}>
+                    <div className="w-full h-full rounded-lg sm:rounded-xl bg-[#1A1A1A] flex items-center justify-center">
+                      <category.icon className="w-5 h-5 sm:w-6 sm:h-6 text-[#00FFC2]" />
                     </div>
-                    <p className="text-xs sm:text-sm md:text-base text-gray-400 line-clamp-2">
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-base sm:text-lg md:text-xl font-semibold text-white group-hover:text-[#00FFC2] transition-colors mb-1 sm:mb-2">
+                      {category.name}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-gray-400 mb-2 sm:mb-3">
                       {category.description}
                     </p>
-                    <div className="flex flex-wrap gap-1 sm:gap-1.5 mt-auto">
-                      {category.tags.map((tag) => (
+                    <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                      {category.tags.map((tag, index) => (
                         <span
-                          key={tag}
-                          className="px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs rounded-full bg-[#1A1A1A] text-[#00FFC2] border border-[#00FFC2]/10 whitespace-nowrap"
+                          key={index}
+                          className="px-2 sm:px-3 py-1 text-[10px] sm:text-xs rounded-full bg-[#252525] text-[#00FFC2]"
                         >
                           {tag}
                         </span>
@@ -111,9 +131,9 @@ export function CategorySection() {
                     </div>
                   </div>
                 </div>
-              </Link>
-            );
-          })}
+              </div>
+            </Link>
+          ))}
         </div>
       </div>
     </section>

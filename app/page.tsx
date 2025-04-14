@@ -154,13 +154,13 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#0F0F0F]">
       {/* Hero Section */}
-      <section className="relative min-h-[70vh] sm:min-h-[80vh] md:min-h-[90vh] flex items-center justify-center pt-16 sm:pt-20">
+      <section className="relative min-h-[60vh] sm:min-h-[70vh] md:min-h-[80vh] flex items-center justify-center pt-12 sm:pt-16 md:pt-20">
         {/* Animated Background Elements */}
         <div className="absolute inset-0 overflow-hidden">
           {[...Array(20)].map((_, i) => (
             <motion.div
               key={i}
-              className="absolute w-2 h-2 bg-[#00FFC2]/20 rounded-full"
+              className="absolute w-1.5 h-1.5 sm:w-2 sm:h-2 bg-[#00FFC2]/20 rounded-full"
               initial={{ 
                 x: Math.random() * dimensions.width, 
                 y: Math.random() * dimensions.height 
@@ -180,14 +180,14 @@ export default function HomePage() {
           ))}
         </div>
 
-        <div className="container mx-auto px-4 relative z-10">
+        <div className="container mx-auto px-3 sm:px-4 md:px-6 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="text-center max-w-4xl mx-auto"
+            className="text-center max-w-3xl sm:max-w-4xl mx-auto"
           >
-            <h1 className="text-4xl sm:text-6xl md:text-8xl font-bold mb-4 sm:mb-6">
+            <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-bold mb-3 sm:mb-4 md:mb-6">
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#00FFC2] to-[#00A8FF]">
                 Stay Updated.
               </span>
@@ -196,12 +196,12 @@ export default function HomePage() {
                 Stay Devified.
               </span>
             </h1>
-            <p className="text-base sm:text-lg md:text-xl text-gray-400 mb-8 sm:mb-12">
+            <p className="text-sm sm:text-base md:text-lg text-gray-400 mb-6 sm:mb-8 md:mb-12">
               Your modern tech news aggregator
             </p>
 
             {/* Search Section */}
-            <div className="relative max-w-xl sm:max-w-2xl mx-auto mb-8 sm:mb-16">
+            <div className="relative max-w-xs sm:max-w-md md:max-w-xl mx-auto mb-6 sm:mb-8 md:mb-12">
               <form onSubmit={handleSearch} className="relative">
                 <input
                   type="text"
@@ -210,24 +210,24 @@ export default function HomePage() {
                   onFocus={() => setIsSearchFocused(true)}
                   onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
                   placeholder="Search articles, topics, or tags..."
-                  className="w-full px-4 sm:px-6 py-3 sm:py-4 bg-[#1A1A1A] rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00FFC2]/50 text-sm sm:text-base"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-[#1A1A1A] rounded-lg sm:rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00FFC2]/50 text-sm sm:text-base"
                 />
-                <button type="submit" className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2">
-                  <Search className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400" />
+                <button type="submit" className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2">
+                  <Search className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
                 </button>
               </form>
 
               {/* Trending Searches */}
               {isSearchFocused && (
-                <div className="absolute w-full mt-2 bg-[#1A1A1A] rounded-xl border border-[#00FFC2]/20 shadow-lg py-3 z-50">
-                  <div className="px-4 py-2">
-                    <h3 className="text-sm font-medium text-gray-400 mb-2">Trending Searches</h3>
-                    <div className="flex flex-wrap gap-2">
+                <div className="absolute w-full mt-2 bg-[#1A1A1A] rounded-lg sm:rounded-xl border border-[#00FFC2]/20 shadow-lg py-2 sm:py-3 z-50">
+                  <div className="px-3 sm:px-4 py-2">
+                    <h3 className="text-xs sm:text-sm font-medium text-gray-400 mb-2">Trending Searches</h3>
+                    <div className="flex flex-wrap gap-1.5 sm:gap-2">
                       {trendingSearches.map((search, index) => (
                         <button
                           key={index}
                           onClick={() => setSearchQuery(search)}
-                          className="px-3 py-1 text-xs rounded-full bg-[#252525] text-[#00FFC2] hover:bg-[#2A2A2A] transition-colors"
+                          className="px-2 sm:px-3 py-1 text-[10px] sm:text-xs rounded-full bg-[#252525] text-[#00FFC2] hover:bg-[#2A2A2A] transition-colors"
                         >
                           {search}
                         </button>
@@ -239,20 +239,20 @@ export default function HomePage() {
             </div>
 
             {/* Quick Access Categories */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 max-w-4xl mx-auto px-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 md:gap-4 max-w-3xl sm:max-w-4xl mx-auto px-3 sm:px-4">
               {suggestedCategories.map((category, index) => (
                 <Link
                   key={index}
                   href={category.href}
                   className="block group"
                 >
-                  <div className="bg-[#1A1A1A] rounded-xl p-3 sm:p-4 text-center hover:bg-[#252525] transition-colors">
-                    <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full mx-auto mb-2 sm:mb-3 bg-gradient-to-r ${category.color} p-0.5`}>
+                  <div className="bg-[#1A1A1A] rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 text-center hover:bg-[#252525] transition-colors">
+                    <div className={`w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full mx-auto mb-1.5 sm:mb-2 md:mb-3 bg-gradient-to-r ${category.color} p-0.5`}>
                       <div className="w-full h-full rounded-full bg-[#1A1A1A] flex items-center justify-center">
-                        <category.icon className="w-5 h-5 sm:w-6 sm:h-6 text-[#00FFC2]" />
+                        <category.icon className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-[#00FFC2]" />
                       </div>
                     </div>
-                    <span className="text-sm sm:text-base text-white group-hover:text-[#00FFC2] transition-colors">
+                    <span className="text-xs sm:text-sm md:text-base text-white group-hover:text-[#00FFC2] transition-colors">
                       {category.name}
                     </span>
                   </div>
@@ -265,44 +265,41 @@ export default function HomePage() {
 
       {/* Articles Section */}
       <section className="py-8 sm:py-12 md:py-16">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-0 bg-gradient-to-r from-[#00FFC2] to-[#00FFE5] bg-clip-text text-transparent">
-              Latest Articles
+        <div className="container mx-auto px-3 sm:px-4 md:px-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-6 mb-6 sm:mb-8">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-[#00FFC2] to-[#00FFE5] bg-clip-text text-transparent">
+              Latest News
             </h2>
             <FilterTags onTagSelect={handleTagSelect} />
           </div>
 
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="space-y-4">
-                  <div className="h-48 bg-[#1A1A1A] rounded-xl animate-pulse" />
-                  <div className="h-4 w-3/4 bg-[#1A1A1A] rounded animate-pulse" />
-                  <div className="h-4 w-1/2 bg-[#1A1A1A] rounded animate-pulse" />
+              {[...Array(6)].map((_, index) => (
+                <div key={index} className="bg-[#1A1A1A] rounded-lg sm:rounded-xl p-4 sm:p-6 animate-pulse">
+                  <div className="h-40 sm:h-48 bg-[#252525] rounded-lg mb-4"></div>
+                  <div className="h-4 bg-[#252525] rounded w-3/4 mb-2"></div>
+                  <div className="h-4 bg-[#252525] rounded w-1/2"></div>
                 </div>
               ))}
             </div>
           ) : (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                {displayedArticles.map((article) => (
-                  <NewsCard key={article.id} article={article} />
-                ))}
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              {displayedArticles.map((article) => (
+                <NewsCard key={article.id} article={article} />
+              ))}
+            </div>
+          )}
 
-              {hasMore && (
-                <div className="mt-8 sm:mt-12 text-center">
-                  <Button
-                    onClick={loadMoreArticles}
-                    variant="outline"
-                    className="bg-transparent hover:bg-primary/10 text-sm sm:text-base"
-                  >
-                    Load More Articles
-                  </Button>
-                </div>
-              )}
-            </>
+          {hasMore && !loading && (
+            <div className="text-center mt-8 sm:mt-12">
+              <Button
+                onClick={loadMoreArticles}
+                className="bg-[#00FFC2] hover:bg-[#00FFC2]/90 text-[#0F0F0F] font-medium px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl"
+              >
+                Load More
+              </Button>
+            </div>
           )}
         </div>
       </section>
