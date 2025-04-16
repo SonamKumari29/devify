@@ -8,7 +8,6 @@
 
 ## ✅ Features (Work in Progress)
 
-- User authentication (register & login)
 - Trending categories
 - About, Contact, and Subscribe sections
 - Clean, responsive UI using modern libraries like:
