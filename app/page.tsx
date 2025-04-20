@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Search, ChevronDown, Loader2, TrendingUp, Code, Cpu, Globe2, Shield } from "lucide-react";
+import { Search, ChevronDown, Loader2, TrendingUp, Code, Cpu, Globe2, Shield, X } from "lucide-react";
 import Link from 'next/link';
 import { CategorySection } from "@/components/CategorySection";
 import { FilterTags } from "@/components/FilterTags";
@@ -46,7 +46,7 @@ export default function HomePage() {
 
   const suggestedCategories = [
     { 
-      name: 'Web Development', 
+      name: 'Web Dev', 
       icon: Code, 
       color: 'from-[#00FFC2] to-[#00A8FF]',
       href: '/category/web-development'
@@ -70,40 +70,6 @@ export default function HomePage() {
       href: '/category/cybersecurity'
     }
   ];
-
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
-    
-    setIsSearching(true);
-    setNoResults(false);
-    try {
-      const results = await searchArticles(searchQuery);
-      setSearchResults(results);
-      setNoResults(results.length === 0);
-      setArticles(results);
-      setDisplayedArticles(results.slice(0, INITIAL_ARTICLES_COUNT));
-      setHasMore(results.length > INITIAL_ARTICLES_COUNT);
-    } catch (error) {
-      console.error('Search error:', error);
-      setNoResults(true);
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const handleSearchClick = async (search: string) => {
-    setSearchQuery(search);
-    setIsSearchFocused(false);
-    const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
-    await handleSearch(fakeEvent);
-  };
-
-  const loadMoreArticles = () => {
-    const nextBatch = articles.slice(displayedArticles.length, displayedArticles.length + INITIAL_ARTICLES_COUNT);
-    setDisplayedArticles(prev => [...prev, ...nextBatch]);
-    setHasMore(displayedArticles.length + nextBatch.length < articles.length);
-  };
 
   useEffect(() => {
     const fetchInitialArticles = async () => {
@@ -137,17 +103,6 @@ export default function HomePage() {
           );
         }
         
-        // Filter by search query
-        if (searchQuery) {
-          allArticles = allArticles.filter(article =>
-            article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            article.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            article.tags.some(tag => 
-              tag.toLowerCase().includes(searchQuery.toLowerCase())
-            )
-          );
-        }
-        
         setArticles(allArticles);
         setDisplayedArticles(allArticles.slice(0, INITIAL_ARTICLES_COUNT));
         setHasMore(allArticles.length > INITIAL_ARTICLES_COUNT);
@@ -158,7 +113,105 @@ export default function HomePage() {
     };
 
     fetchInitialArticles();
-  }, [selectedTags, searchQuery, selectedCategory]);
+  }, [selectedTags, selectedCategory]);
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    
+    setIsSearching(true);
+    setNoResults(false);
+    try {
+      const results = await searchArticles(searchQuery);
+      setSearchResults(results);
+      setNoResults(results.length === 0);
+      
+      // Update the main articles list with search results
+      setArticles(results);
+      setDisplayedArticles(results.slice(0, INITIAL_ARTICLES_COUNT));
+      setHasMore(results.length > INITIAL_ARTICLES_COUNT);
+      
+      // Keep the search dropdown open to show results
+      setIsSearchFocused(true);
+    } catch (error) {
+      console.error('Search error:', error);
+      setNoResults(true);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSearchClick = async (search: string) => {
+    setSearchQuery(search);
+    setIsSearchFocused(true);
+    setIsSearching(true);
+    setNoResults(false);
+    try {
+      const results = await searchArticles(search);
+      setSearchResults(results);
+      setNoResults(results.length === 0);
+      setArticles(results);
+      setDisplayedArticles(results.slice(0, INITIAL_ARTICLES_COUNT));
+      setHasMore(results.length > INITIAL_ARTICLES_COUNT);
+    } catch (error) {
+      console.error('Search error:', error);
+      setNoResults(true);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setSearchResults([]);
+    setNoResults(false);
+    // Reset to initial state
+    setLoading(true);
+    const fetchAndReset = async () => {
+      try {
+        const [devToArticles, hackerNewsArticles] = await Promise.all([
+          fetchDevToArticles(selectedTags[0] || selectedCategory || undefined, 1),
+          fetchHackerNewsArticles(1),
+        ]);
+        
+        let allArticles = [...devToArticles, ...hackerNewsArticles]
+          .sort((a, b) => (b.reactions || 0) - (a.reactions || 0));
+        
+        if (selectedTags.length > 0) {
+          allArticles = allArticles.filter(article => 
+            selectedTags.some(tag => 
+              article.tags.some(articleTag => 
+                articleTag.toLowerCase().includes(tag.toLowerCase())
+              )
+            )
+          );
+        }
+        
+        if (selectedCategory) {
+          allArticles = allArticles.filter(article => 
+            article.tags.some(tag => 
+              tag.toLowerCase().includes(selectedCategory.toLowerCase())
+            )
+          );
+        }
+        
+        setArticles(allArticles);
+        setDisplayedArticles(allArticles.slice(0, INITIAL_ARTICLES_COUNT));
+        setHasMore(allArticles.length > INITIAL_ARTICLES_COUNT);
+      } catch (error) {
+        console.error("Error fetching articles:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAndReset();
+  };
+
+  const loadMoreArticles = () => {
+    const nextBatch = articles.slice(displayedArticles.length, displayedArticles.length + INITIAL_ARTICLES_COUNT);
+    setDisplayedArticles(prev => [...prev, ...nextBatch]);
+    setHasMore(displayedArticles.length + nextBatch.length < articles.length);
+  };
 
   const handleTagSelect = (tag: string) => {
     setSelectedTags(prev => {
@@ -235,67 +288,126 @@ export default function HomePage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => setIsSearchFocused(true)}
-                  onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
                   placeholder="Search articles, topics, or tags..."
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-[#1A1A1A] rounded-lg sm:rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00FFC2]/50 text-sm sm:text-base"
+                  className="w-full pl-14 pr-14 py-4 bg-[#1A1A1A] border border-[#00FFC2]/20 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:border-[#00FFC2] transition-all"
+                  autoFocus
                   disabled={isSearching}
                 />
-                {isSearching ? (
-                  <div className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2">
-                    <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 text-[#00FFC2] animate-spin" />
-                  </div>
-                ) : (
-                  <button type="submit" className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2">
-                    <Search className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-                  </button>
-                )}
+                <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <div className="absolute right-5 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                  {isSearching ? (
+                    <Loader2 className="w-5 h-5 text-[#00FFC2] animate-spin" />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={searchQuery ? clearSearch : () => setIsSearchFocused(false)}
+                      className="text-gray-400 hover:text-white transition-colors p-1"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  )}
+                </div>
               </form>
 
-              {/* Search Results or Trending Searches */}
+              {/* Search Results Dropdown */}
               {isSearchFocused && (
-                <div className="absolute w-full mt-2 bg-[#1A1A1A] rounded-lg sm:rounded-xl border border-[#00FFC2]/20 shadow-lg py-2 sm:py-3 z-50">
-                  {isSearching ? (
-                    <div className="text-center py-4">
-                      <Loader2 className="w-6 h-6 text-[#00FFC2] animate-spin mx-auto mb-2" />
-                      <p className="text-sm text-gray-400">Searching for articles...</p>
-                    </div>
-                  ) : searchQuery && noResults ? (
-                    <div className="text-center py-4">
-                      <p className="text-sm text-gray-400 mb-1">No articles found for "{searchQuery}"</p>
-                      <p className="text-xs text-gray-500">We're constantly adding new content. Please check back soon!</p>
-                    </div>
-                  ) : searchQuery && searchResults.length > 0 ? (
-                    <div className="px-3 sm:px-4">
-                      <h3 className="text-xs sm:text-sm font-medium text-[#00FFC2] mb-2">Search Results</h3>
-                      <div className="space-y-2">
-                        {searchResults.slice(0, 5).map((article) => (
-                          <Link
-                            key={article.id}
-                            href={article.url}
-                            target="_blank"
-                            className="block p-2 rounded-lg hover:bg-[#252525] transition-colors group"
+                <div className="absolute w-full mt-2 bg-[#1A1A1A] rounded-xl border border-[#00FFC2]/20 shadow-lg overflow-hidden z-50">
+                  {/* Search Results */}
+                  {searchQuery && (
+                    <div className="mb-4">
+                      {isSearching ? (
+                        <div className="text-center py-6">
+                          <div className="relative w-12 h-12 mx-auto mb-3">
+                            <div className="absolute inset-0 bg-gradient-to-r from-[#00FFC2] to-[#00A8FF] rounded-full animate-ping opacity-20"></div>
+                            <Loader2 className="w-12 h-12 text-[#00FFC2] animate-spin" />
+                          </div>
+                          <p className="text-gray-400">Searching for "{searchQuery}"...</p>
+                        </div>
+                      ) : noResults ? (
+                        <div className="text-center py-8">
+                          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-[#00FFC2]/10 to-[#00A8FF]/10 flex items-center justify-center">
+                            <Search className="w-8 h-8 text-gray-500" />
+                          </div>
+                          <p className="text-gray-400 mb-2">No articles found for "{searchQuery}"</p>
+                          <p className="text-sm text-gray-500 mb-4">We're constantly adding new content. Please check back soon!</p>
+                          <button
+                            onClick={clearSearch}
+                            className="text-sm text-[#00FFC2] hover:text-[#00FFC2]/80 transition-colors"
                           >
-                            <h4 className="text-sm text-white group-hover:text-[#00FFC2] transition-colors line-clamp-1">
-                              {article.title}
-                            </h4>
-                            <p className="text-xs text-gray-400 line-clamp-1 mt-1">
-                              {article.description}
-                            </p>
-                          </Link>
-                        ))}
-                      </div>
+                            Clear search
+                          </button>
+                        </div>
+                      ) : searchResults.length > 0 ? (
+                        <div className="p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-sm font-medium text-[#00FFC2]">Search Results</h3>
+                              <span className="text-xs text-gray-500">for "{searchQuery}"</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className="text-xs text-gray-500">{searchResults.length} articles found</span>
+                              <button
+                                onClick={clearSearch}
+                                className="text-xs text-gray-400 hover:text-[#00FFC2] transition-colors flex items-center gap-1"
+                              >
+                                <X className="w-3 h-3" />
+                                Clear
+                              </button>
+                            </div>
+                          </div>
+                          <div className="space-y-3">
+                            {searchResults.map((article) => (
+                              <Link
+                                key={article.id}
+                                href={article.url}
+                                target="_blank"
+                                className="block p-3 rounded-lg bg-[#252525] hover:bg-[#2A2A2A] transition-all transform hover:scale-[1.02] group"
+                                onClick={() => setIsSearchFocused(false)}
+                              >
+                                <div className="flex items-start gap-3">
+                                  <div className="w-12 h-12 rounded-lg bg-gradient-to-r from-[#00FFC2]/10 to-[#00A8FF]/10 flex items-center justify-center flex-shrink-0">
+                                    <Code className="w-6 h-6 text-[#00FFC2]" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="text-white group-hover:text-[#00FFC2] transition-colors line-clamp-1 font-medium">
+                                      {article.title}
+                                    </h4>
+                                    <p className="text-sm text-gray-400 line-clamp-2 mt-1">
+                                      {article.description}
+                                    </p>
+                                    <div className="flex items-center gap-2 mt-2">
+                                      <span className="text-xs text-[#00FFC2]">{article.source}</span>
+                                      <span className="text-xs text-gray-500">•</span>
+                                      <span className="text-xs text-gray-500">
+                                        {new Date(article.publishedAt).toLocaleDateString()}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
-                  ) : (
-                    <div className="px-3 sm:px-4 py-2">
-                      <h3 className="text-xs sm:text-sm font-medium text-gray-400 mb-2">Trending Searches</h3>
-                      <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                  )}
+
+                  {/* Trending Searches */}
+                  {!searchQuery && (
+                    <div className="p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <TrendingUp className="w-4 h-4 text-[#00FFC2]" />
+                        <span className="text-sm font-medium text-gray-400">Trending Searches</span>
+                      </div>
+                      <div className="space-y-2">
                         {trendingSearches.map((search, index) => (
                           <button
                             key={index}
                             onClick={() => handleSearchClick(search)}
-                            className="px-2 sm:px-3 py-1 text-[10px] sm:text-xs rounded-full bg-[#252525] text-[#00FFC2] hover:bg-[#2A2A2A] transition-colors"
+                            className="block w-full text-left px-3 py-2 text-sm text-gray-400 hover:bg-[#252525] hover:text-[#00FFC2] rounded-lg transition-all transform hover:scale-[1.02] group flex items-center justify-between"
                           >
-                            {search}
+                            <span>{search}</span>
+                            <Search className="w-3 h-3 opacity-0 group-hover:opacity-50 transition-opacity" />
                           </button>
                         ))}
                       </div>
