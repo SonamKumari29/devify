@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { FolderOpen } from 'lucide-react';
+import { Loader } from "@/components/ui/loader";
 
 interface CategoryPageContentProps {
   categoryId: string;
@@ -113,16 +114,24 @@ export function CategoryPageContent({ categoryId }: CategoryPageContentProps) {
               <Button
                 variant="outline"
                 onClick={() => setPage(prev => prev + 1)}
-                className="bg-transparent hover:bg-primary/10"
+                className="bg-transparent hover:bg-primary/10 flex items-center gap-2"
+                disabled={isLoading}
               >
-                Load More
+                {isLoading ? (
+                  <>
+                    <Loader size="sm" />
+                    Loading...
+                  </>
+                ) : (
+                  'Load More'
+                )}
               </Button>
             </div>
           )}
 
           {isLoading && page > 1 && (
             <div className="mt-8 flex justify-center">
-              <Skeleton className="h-10 w-32" />
+              <Loader size="lg" />
             </div>
           )}
         </>

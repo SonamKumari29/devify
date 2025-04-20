@@ -3,13 +3,17 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, TrendingUp, Code, Menu, ChevronRight } from 'lucide-react';
+import { Search, X, TrendingUp, Code, Menu, ChevronRight, Loader2 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
+import { searchArticles, type Article } from '@/lib/api';
 
 export function Navbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<Article[]>([]);
+  const [noResults, setNoResults] = useState(false);
   const pathname = usePathname();
 
   const trendingSearches = [
@@ -58,10 +62,28 @@ export function Navbar() {
     };
   }, [isMenuOpen]);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Searching for:', searchQuery);
-    setIsSearchOpen(false);
+  const handleSearch = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!searchQuery.trim()) return;
+    
+    setIsSearching(true);
+    setNoResults(false);
+    try {
+      const results = await searchArticles(searchQuery);
+      setSearchResults(results);
+      setNoResults(results.length === 0);
+    } catch (error) {
+      console.error('Search error:', error);
+      setNoResults(true);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Handle trending and recent search clicks
+  const handleSearchClick = async (search: string) => {
+    setSearchQuery(search);
+    await handleSearch();
   };
 
   const handleLinkClick = () => {
@@ -81,51 +103,19 @@ export function Navbar() {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-20">
             <Link href="/" className="flex items-center gap-4 relative group">
-              <div className="relative">
-                <div className="absolute -inset-3 bg-gradient-to-r from-[#00FFC2] to-[#00A8FF] opacity-50 blur-2xl rounded-full group-hover:opacity-75 transition-opacity" />
-                <motion.div 
-                  className="absolute -inset-2 bg-gradient-to-r from-[#00FFC2] via-[#00A8FF] to-[#00FFC2] rounded-full opacity-0 group-hover:opacity-50"
-                  animate={{
-                    scale: [1, 1.2, 1],
-                    opacity: [0, 0.5, 0],
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
-                />
-                <div className="relative bg-[#1A1A1A] p-2 rounded-xl border border-[#00FFC2]/50 group-hover:border-[#00FFC2] transition-colors">
-                  <motion.div
-                    animate={{
-                      rotateY: [0, 360],
-                    }}
-                    transition={{
-                      duration: 3,
-                      repeat: Infinity,
-                      ease: "linear",
-                    }}
-                  >
-                    <Code className="w-8 h-8 text-[#00FFC2] group-hover:text-[#00A8FF] transition-colors" />
-                  </motion.div>
-                </div>
-              </div>
-              <div className="relative">
-                <motion.span 
-                  className="text-2xl font-bold bg-gradient-to-r from-[#00FFC2] via-[#00A8FF] to-[#00FFC2] bg-clip-text text-transparent bg-[length:200%_100%]"
-                  animate={{
-                    backgroundPosition: ['0% 0%', '100% 0%', '0% 0%'],
-                  }}
-                  transition={{
-                    duration: 8,
-                    repeat: Infinity,
-                    ease: "linear",
-                  }}
-                >
-                  Devify
-                </motion.span>
-                <div className="absolute -inset-1 bg-gradient-to-r from-[#00FFC2] to-[#00A8FF] opacity-25 blur-lg rounded-full" />
-              </div>
+              <motion.span 
+                className="text-3xl font-bold"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5 }}
+              >
+                <span className="relative">
+                  <span className="absolute -inset-1 bg-gradient-to-r from-[#00FFC2] via-[#00A8FF] to-[#00FFC2] opacity-20 blur-lg rounded-full group-hover:opacity-30 transition-opacity" />
+                  <span className="relative bg-gradient-to-r from-[#00FFC2] via-[#00A8FF] to-[#00FFC2] bg-clip-text text-transparent bg-[length:200%_100%] group-hover:bg-[length:100%_100%] transition-all duration-500">
+                    Devify
+                  </span>
+                </span>
+              </motion.span>
             </Link>
 
             {/* Mobile Menu Button */}
@@ -168,7 +158,7 @@ export function Navbar() {
         </div>
 
         {/* Mobile Menu */}
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
           {isMenuOpen && (
             <>
               <motion.div
@@ -260,7 +250,7 @@ export function Navbar() {
       </nav>
       <div className="h-20"></div>
 
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {isSearchOpen && (
           <>
             <motion.div
@@ -285,58 +275,105 @@ export function Navbar() {
                     placeholder="Search articles..."
                     className="w-full pl-12 pr-12 py-4 bg-[#1A1A1A] border border-[#00FFC2]/20 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:border-[#00FFC2] transition-all"
                     autoFocus
+                    disabled={isSearching}
                   />
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <button
-                    type="button"
-                    onClick={() => setIsSearchOpen(false)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
+                  {isSearching ? (
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                      <Loader2 className="w-5 h-5 text-[#00FFC2] animate-spin" />
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setIsSearchOpen(false)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  )}
                 </form>
 
-                <div className="mt-6 grid grid-cols-2 gap-8">
-                  <div>
-                    <div className="flex items-center gap-2 text-sm text-[#00FFC2] mb-3">
-                      <TrendingUp className="w-4 h-4" />
-                      <span>Trending Searches</span>
+                <div className="mt-6">
+                  {/* Search Results */}
+                  {searchQuery && (
+                    <div className="mb-8">
+                      {isSearching ? (
+                        <div className="text-center py-8">
+                          <Loader2 className="w-8 h-8 text-[#00FFC2] animate-spin mx-auto mb-4" />
+                          <p className="text-gray-400">Searching for articles...</p>
+                        </div>
+                      ) : noResults ? (
+                        <div className="text-center py-8">
+                          <p className="text-gray-400 mb-2">No articles found for "{searchQuery}"</p>
+                          <p className="text-sm text-gray-500">We're constantly adding new content. Please check back soon!</p>
+                        </div>
+                      ) : searchResults.length > 0 ? (
+                        <div className="space-y-4">
+                          <h3 className="text-[#00FFC2] text-sm font-medium mb-4">Search Results</h3>
+                          {searchResults.map((article) => (
+                            <Link
+                              key={article.id}
+                              href={article.url}
+                              target="_blank"
+                              className="block p-4 rounded-lg bg-[#1A1A1A] hover:bg-[#1A1A1A]/80 transition-colors group"
+                            >
+                              <h4 className="text-white group-hover:text-[#00FFC2] transition-colors mb-2">
+                                {article.title}
+                              </h4>
+                              <p className="text-sm text-gray-400 line-clamp-2 mb-2">
+                                {article.description}
+                              </p>
+                              <div className="flex items-center gap-2 text-xs text-gray-500">
+                                <span>{article.source}</span>
+                                <span>•</span>
+                                <span>{new Date(article.publishedAt).toLocaleDateString()}</span>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                      ) : null}
                     </div>
-                    <div className="space-y-2">
-                      {trendingSearches.map((search, index) => (
-                        <button
-                          key={index}
-                          onClick={() => {
-                            setSearchQuery(search);
-                            handleSearch(new Event('submit') as any);
-                          }}
-                          className="block w-full text-left px-3 py-2 text-sm text-gray-400 hover:bg-[#00FFC2]/10 hover:text-white rounded-lg transition-colors"
-                        >
-                          {search}
-                        </button>
-                      ))}
+                  )}
+
+                  {/* Trending and Recent Searches */}
+                  {!searchQuery && (
+                    <div className="grid grid-cols-2 gap-8">
+                      <div>
+                        <div className="flex items-center gap-2 text-sm text-[#00FFC2] mb-3">
+                          <TrendingUp className="w-4 h-4" />
+                          <span>Trending Searches</span>
+                        </div>
+                        <div className="space-y-2">
+                          {trendingSearches.map((search, index) => (
+                            <button
+                              key={index}
+                              onClick={() => handleSearchClick(search)}
+                              className="block w-full text-left px-3 py-2 text-sm text-gray-400 hover:bg-[#00FFC2]/10 hover:text-white rounded-lg transition-colors"
+                            >
+                              {search}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 text-sm text-[#00FFC2] mb-3">
+                          <TrendingUp className="w-4 h-4" />
+                          <span>Recent Searches</span>
+                        </div>
+                        <div className="space-y-2">
+                          {recentSearches.map((search, index) => (
+                            <button
+                              key={index}
+                              onClick={() => handleSearchClick(search)}
+                              className="block w-full text-left px-3 py-2 text-sm text-gray-400 hover:bg-[#00FFC2]/10 hover:text-white rounded-lg transition-colors"
+                            >
+                              {search}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 text-sm text-[#00FFC2] mb-3">
-                      <TrendingUp className="w-4 h-4" />
-                      <span>Recent Searches</span>
-                    </div>
-                    <div className="space-y-2">
-                      {recentSearches.map((search, index) => (
-                        <button
-                          key={index}
-                          onClick={() => {
-                            setSearchQuery(search);
-                            handleSearch(new Event('submit') as any);
-                          }}
-                          className="block w-full text-left px-3 py-2 text-sm text-gray-400 hover:bg-[#00FFC2]/10 hover:text-white rounded-lg transition-colors"
-                        >
-                          {search}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </motion.div>

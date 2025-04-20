@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { NewsCard } from '@/components/NewsCard';
 import { fetchDevToArticles, fetchHackerNewsArticles, type Article } from '@/lib/api';
+import { Loader } from "@/components/ui/loader";
 
 interface CategoryArticlesProps {
   categoryId: string;
@@ -44,7 +45,7 @@ export function CategoryArticles({ categoryId }: CategoryArticlesProps) {
   if (loading) {
     return (
       <div className="col-span-full flex justify-center py-20">
-        <div className="w-8 h-8 border-4 border-[#00FFC2] border-t-transparent rounded-full animate-spin" />
+        <Loader size="lg" />
       </div>
     );
   }

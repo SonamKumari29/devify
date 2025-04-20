@@ -8,7 +8,8 @@ import { CategorySection } from "@/components/CategorySection";
 import { FilterTags } from "@/components/FilterTags";
 import { NewsCard } from "@/components/NewsCard";
 import { Button } from "@/components/ui/button";
-import { fetchDevToArticles, fetchHackerNewsArticles, type Article } from "@/lib/api";
+import { fetchDevToArticles, fetchHackerNewsArticles, searchArticles, type Article } from "@/lib/api";
+import { Loader } from "@/components/ui/loader";
 
 const INITIAL_ARTICLES_COUNT = 6; // Show only 6 articles initially
 
@@ -23,6 +24,9 @@ export default function HomePage() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [dimensions, setDimensions] = useState({ width: 1200, height: 800 });
+  const [searchResults, setSearchResults] = useState<Article[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [noResults, setNoResults] = useState(false);
 
   useEffect(() => {
     setDimensions({
@@ -67,9 +71,32 @@ export default function HomePage() {
     }
   ];
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Searching for:', searchQuery);
+    if (!searchQuery.trim()) return;
+    
+    setIsSearching(true);
+    setNoResults(false);
+    try {
+      const results = await searchArticles(searchQuery);
+      setSearchResults(results);
+      setNoResults(results.length === 0);
+      setArticles(results);
+      setDisplayedArticles(results.slice(0, INITIAL_ARTICLES_COUNT));
+      setHasMore(results.length > INITIAL_ARTICLES_COUNT);
+    } catch (error) {
+      console.error('Search error:', error);
+      setNoResults(true);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSearchClick = async (search: string) => {
+    setSearchQuery(search);
+    setIsSearchFocused(false);
+    const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+    await handleSearch(fakeEvent);
   };
 
   const loadMoreArticles = () => {
@@ -211,29 +238,69 @@ export default function HomePage() {
                   onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
                   placeholder="Search articles, topics, or tags..."
                   className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-[#1A1A1A] rounded-lg sm:rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00FFC2]/50 text-sm sm:text-base"
+                  disabled={isSearching}
                 />
-                <button type="submit" className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2">
-                  <Search className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
-                </button>
+                {isSearching ? (
+                  <div className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2">
+                    <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 text-[#00FFC2] animate-spin" />
+                  </div>
+                ) : (
+                  <button type="submit" className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2">
+                    <Search className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+                  </button>
+                )}
               </form>
 
-              {/* Trending Searches */}
+              {/* Search Results or Trending Searches */}
               {isSearchFocused && (
                 <div className="absolute w-full mt-2 bg-[#1A1A1A] rounded-lg sm:rounded-xl border border-[#00FFC2]/20 shadow-lg py-2 sm:py-3 z-50">
-                  <div className="px-3 sm:px-4 py-2">
-                    <h3 className="text-xs sm:text-sm font-medium text-gray-400 mb-2">Trending Searches</h3>
-                    <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                      {trendingSearches.map((search, index) => (
-                        <button
-                          key={index}
-                          onClick={() => setSearchQuery(search)}
-                          className="px-2 sm:px-3 py-1 text-[10px] sm:text-xs rounded-full bg-[#252525] text-[#00FFC2] hover:bg-[#2A2A2A] transition-colors"
-                        >
-                          {search}
-                        </button>
-                      ))}
+                  {isSearching ? (
+                    <div className="text-center py-4">
+                      <Loader2 className="w-6 h-6 text-[#00FFC2] animate-spin mx-auto mb-2" />
+                      <p className="text-sm text-gray-400">Searching for articles...</p>
                     </div>
-                  </div>
+                  ) : searchQuery && noResults ? (
+                    <div className="text-center py-4">
+                      <p className="text-sm text-gray-400 mb-1">No articles found for "{searchQuery}"</p>
+                      <p className="text-xs text-gray-500">We're constantly adding new content. Please check back soon!</p>
+                    </div>
+                  ) : searchQuery && searchResults.length > 0 ? (
+                    <div className="px-3 sm:px-4">
+                      <h3 className="text-xs sm:text-sm font-medium text-[#00FFC2] mb-2">Search Results</h3>
+                      <div className="space-y-2">
+                        {searchResults.slice(0, 5).map((article) => (
+                          <Link
+                            key={article.id}
+                            href={article.url}
+                            target="_blank"
+                            className="block p-2 rounded-lg hover:bg-[#252525] transition-colors group"
+                          >
+                            <h4 className="text-sm text-white group-hover:text-[#00FFC2] transition-colors line-clamp-1">
+                              {article.title}
+                            </h4>
+                            <p className="text-xs text-gray-400 line-clamp-1 mt-1">
+                              {article.description}
+                            </p>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="px-3 sm:px-4 py-2">
+                      <h3 className="text-xs sm:text-sm font-medium text-gray-400 mb-2">Trending Searches</h3>
+                      <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                        {trendingSearches.map((search, index) => (
+                          <button
+                            key={index}
+                            onClick={() => handleSearchClick(search)}
+                            className="px-2 sm:px-3 py-1 text-[10px] sm:text-xs rounded-full bg-[#252525] text-[#00FFC2] hover:bg-[#2A2A2A] transition-colors"
+                          >
+                            {search}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -295,9 +362,17 @@ export default function HomePage() {
             <div className="text-center mt-8 sm:mt-12">
               <Button
                 onClick={loadMoreArticles}
-                className="bg-[#00FFC2] hover:bg-[#00FFC2]/90 text-[#0F0F0F] font-medium px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl"
+                className="bg-[#00FFC2] hover:bg-[#00FFC2]/90 text-[#0F0F0F] font-medium px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl flex items-center gap-2"
+                disabled={loading}
               >
-                Load More
+                {loading ? (
+                  <>
+                    <Loader size="sm" />
+                    Loading...
+                  </>
+                ) : (
+                  'Load More'
+                )}
               </Button>
             </div>
           )}

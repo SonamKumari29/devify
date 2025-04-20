@@ -182,3 +182,39 @@ export async function fetchArticles(category?: string): Promise<Article[]> {
     return [];
   }
 }
+
+export async function searchArticles(query: string): Promise<Article[]> {
+  try {
+    // Fetch articles from both sources
+    const [devToArticles, hackerNewsArticles] = await Promise.all([
+      fetchDevToArticles(),
+      fetchHackerNewsArticles()
+    ]);
+
+    const allArticles = [...devToArticles, ...hackerNewsArticles];
+    
+    // If no query, return trending articles
+    if (!query.trim()) {
+      return allArticles.sort((a, b) => (b.reactions || 0) - (a.reactions || 0)).slice(0, 10);
+    }
+
+    // Search in title, description, and tags
+    const searchResults = allArticles.filter(article => {
+      const searchableText = [
+        article.title.toLowerCase(),
+        article.description.toLowerCase(),
+        ...article.tags.map(tag => tag.toLowerCase())
+      ].join(' ');
+      
+      return query.toLowerCase().split(' ').every(term => 
+        searchableText.includes(term)
+      );
+    });
+
+    // Sort by relevance (reactions) and limit to 10 results
+    return searchResults.sort((a, b) => (b.reactions || 0) - (a.reactions || 0)).slice(0, 10);
+  } catch (error) {
+    console.error('Error searching articles:', error);
+    return [];
+  }
+}

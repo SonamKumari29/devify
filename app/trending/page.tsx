@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Flame } from 'lucide-react';
 import { FilterTags } from '@/components/FilterTags';
+import { Loader } from "@/components/ui/loader";
 
 export default function TrendingPage() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -108,16 +109,24 @@ export default function TrendingPage() {
               <Button
                 variant="outline"
                 onClick={() => setPage(prev => prev + 1)}
-                className="bg-transparent hover:bg-primary/10"
+                className="bg-transparent hover:bg-primary/10 flex items-center gap-2"
+                disabled={loading}
               >
-                Load More
+                {loading ? (
+                  <>
+                    <Loader size="sm" />
+                    Loading...
+                  </>
+                ) : (
+                  'Load More'
+                )}
               </Button>
             </div>
           )}
 
           {loading && page > 1 && (
             <div className="mt-8 flex justify-center">
-              <Skeleton className="h-10 w-32" />
+              <Loader size="lg" />
             </div>
           )}
         </>
