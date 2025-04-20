@@ -1,5 +1,5 @@
 # Devify
-![image](https://github.com/user-attachments/assets/105a0f75-fbf7-4180-81ea-06fa67738d66)
+![image](https://github.com/user-attachments/assets/c1c94f24-9c21-4321-b051-d42e465bf89d)
 
 **Devify** is a community-focused blog platform for developers to explore trending topics, share knowledge, and stay connected. Built using modern technologies and UI libraries for a smooth user experience.
 
